@@ -213,7 +213,11 @@ const Index = () => {
             ))}
           </div>
 
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => navigate("/todas-ocorrencias")}
+          >
             Ver todas as ocorrências
           </Button>
         </div>
