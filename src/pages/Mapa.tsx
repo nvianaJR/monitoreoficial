@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import mapaCotia from "@/assets/mapa-cotia.jpg";
 
 const Mapa = () => {
   const navigate = useNavigate();
@@ -82,124 +79,72 @@ const Mapa = () => {
       <main className="container mx-auto px-4 py-6 pb-24">
         <Card className="mb-4">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                  <span>Pendente</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500"></div>
-                  <span>Concluída</span>
-                </div>
+            <div className="flex items-center gap-4 text-sm flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                <span>Pendente</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Use os dedos ou mouse para navegar e dar zoom
-              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                <span>Concluída</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Mapa com Zoom */}
+        {/* Mapa Interativo OpenStreetMap */}
         <Card className="overflow-hidden mb-6">
           <CardContent className="p-0">
-            <TransformWrapper
-              initialScale={1}
-              minScale={0.5}
-              maxScale={4}
-              centerOnInit
-            >
-              {({ zoomIn, zoomOut, resetTransform }) => (
-                <>
-                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => zoomIn()}
-                      className="shadow-lg"
+            <div className="relative w-full h-[500px]">
+              <iframe
+                src="https://www.openstreetmap.org/export/embed.html?bbox=-46.9388%2C-23.6239%2C-46.8988%2C-23.5839&layer=mapnik&marker=-23.6039,-46.9188"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                title="Mapa de Cotia - SP"
+              />
+              
+              {/* Marcadores das ocorrências sobrepostos */}
+              {ocorrencias.map((occurrence) => (
+                <div
+                  key={occurrence.id}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10"
+                  style={{
+                    left: `${occurrence.coordinates.x}%`,
+                    top: `${occurrence.coordinates.y}%`,
+                  }}
+                >
+                  <div className="relative flex flex-col items-center">
+                    <div
+                      className={`w-6 h-6 rounded-full ${getMarkerColor(
+                        occurrence.status
+                      )} shadow-lg flex items-center justify-center border-2 border-white animate-pulse`}
                     >
-                      <ZoomIn className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => zoomOut()}
-                      className="shadow-lg"
-                    >
-                      <ZoomOut className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => resetTransform()}
-                      className="shadow-lg text-xs"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <TransformComponent
-                    wrapperStyle={{
-                      width: "100%",
-                      height: "500px",
-                      cursor: "grab",
-                    }}
-                    contentStyle={{
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  >
-                    <div className="relative w-full h-full">
-                      <img
-                        src={mapaCotia}
-                        alt="Mapa de Cotia"
-                        className="w-full h-full object-contain"
-                        draggable={false}
-                      />
-                      
-                      {/* Marcadores das ocorrências */}
-                      {ocorrencias.map((occurrence) => (
-                        <div
-                          key={occurrence.id}
-                          className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer group"
-                          style={{
-                            left: `${occurrence.coordinates.x}%`,
-                            top: `${occurrence.coordinates.y}%`,
-                          }}
-                        >
-                          <div className="relative flex flex-col items-center">
-                            <div
-                              className={`w-8 h-8 rounded-full ${getMarkerColor(
-                                occurrence.status
-                              )} shadow-lg flex items-center justify-center border-2 border-white animate-pulse`}
-                            >
-                              <MapPin className="w-5 h-5 text-white" fill="currentColor" />
-                            </div>
-                            
-                            {/* Tooltip */}
-                            <div className="absolute top-full mt-2 hidden group-hover:block z-50 w-56">
-                              <Card className="shadow-xl">
-                                <CardContent className="p-3 space-y-2">
-                                  <div className="font-semibold">{occurrence.type}</div>
-                                  <Badge className={getStatusColor(occurrence.status)}>
-                                    {occurrence.status}
-                                  </Badge>
-                                  <p className="text-xs text-muted-foreground">
-                                    {occurrence.description}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {occurrence.location}
-                                  </p>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                      <MapPin className="w-4 h-4 text-white" fill="currentColor" />
                     </div>
-                  </TransformComponent>
-                </>
-              )}
-            </TransformWrapper>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 hidden group-hover:block z-50 w-56 pointer-events-none">
+                      <Card className="shadow-xl">
+                        <CardContent className="p-3 space-y-2">
+                          <div className="font-semibold">{occurrence.type}</div>
+                          <Badge className={getStatusColor(occurrence.status)}>
+                            {occurrence.status}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            {occurrence.description}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {occurrence.location}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
