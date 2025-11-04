@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const NovaOcorrencia = () => {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ const NovaOcorrencia = () => {
     setPreview2("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!nome || !telefone || !categoria || !endereco || !descricao) {
@@ -68,13 +69,38 @@ const NovaOcorrencia = () => {
       return;
     }
 
-    // Aqui você pode implementar a lógica de envio
-    toast({
-      title: "Ocorrência registrada!",
-      description: "Sua ocorrência foi registrada com sucesso.",
-    });
-    
-    navigate("/");
+    try {
+      const fotos = [];
+      if (preview1) fotos.push(preview1);
+      if (preview2) fotos.push(preview2);
+
+      const { error } = await supabase
+        .from('occurrences')
+        .insert({
+          nome,
+          telefone,
+          categoria,
+          endereco,
+          ponto_referencia: pontoReferencia || null,
+          descricao,
+          fotos: fotos.length > 0 ? fotos : null,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Ocorrência registrada!",
+        description: "Sua ocorrência foi registrada com sucesso.",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Erro ao registrar",
+        description: "Não foi possível registrar a ocorrência. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

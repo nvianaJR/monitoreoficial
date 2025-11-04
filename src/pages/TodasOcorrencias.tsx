@@ -1,13 +1,30 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 const TodasOcorrencias = () => {
   const navigate = useNavigate();
+  const [todasOcorrencias, setTodasOcorrencias] = useState<any[]>([]);
 
-  const todasOcorrencias: any[] = [];
+  useEffect(() => {
+    fetchOccurrences();
+  }, []);
+
+  const fetchOccurrences = async () => {
+    const { data } = await supabase
+      .from('occurrences')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (data) {
+      setTodasOcorrencias(data);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,30 +81,30 @@ const TodasOcorrencias = () => {
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold text-lg">{occurrence.type}</h3>
+                    <h3 className="font-semibold text-lg">{occurrence.categoria}</h3>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge className={getStatusColor(occurrence.status)}>
                         {occurrence.status}
                       </Badge>
-                      <Badge variant={getPriorityColor(occurrence.priority)}>
-                        Prioridade: {occurrence.priority}
+                      <Badge variant={getPriorityColor(occurrence.prioridade)}>
+                        Prioridade: {occurrence.prioridade}
                       </Badge>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  {occurrence.description}
+                  {occurrence.descricao}
                 </p>
 
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    <span>{occurrence.location}</span>
+                    <span>{occurrence.endereco}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    <span>Registrada em {occurrence.date}</span>
+                    <span>Registrada em {new Date(occurrence.created_at).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
               </CardContent>

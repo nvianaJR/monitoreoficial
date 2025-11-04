@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,38 +18,52 @@ import {
   Calendar
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const [userName] = useState("Nivaldo Viana Junior");
-
-  const stats = [
-    { label: "Total", value: "2", sublabel: "ocorrências", icon: TrendingUp },
+  const [stats, setStats] = useState([
+    { label: "Total", value: "0", sublabel: "ocorrências", icon: TrendingUp },
     { label: "Minhas", value: "0", sublabel: "registradas por mim", icon: Users },
-    { label: "Pendentes", value: "2", sublabel: "em andamento", icon: Clock },
+    { label: "Pendentes", value: "0", sublabel: "em andamento", icon: Clock },
     { label: "Concluídas", value: "0", sublabel: "resolvidas", icon: CheckCircle },
-  ];
+  ]);
+  const [recentOccurrences, setRecentOccurrences] = useState<any[]>([]);
 
-  const recentOccurrences = [
-    {
-      id: 1,
-      type: "Calçada",
-      status: "Recebida",
-      priority: "Alta",
-      description: "Buraco grande na calçada em frente ao mercado, dificultando passagem de pedestres e cadeirantes.",
-      location: "Rua das Flores, 123 - Centro",
-      date: "25/09/2025",
-    },
-    {
-      id: 2,
-      type: "Iluminação",
-      status: "Em análise",
-      priority: "Média",
-      description: "Poste de luz queimado na praça, deixando área escura durante a noite.",
-      location: "Praça da Liberdade - Centro",
-      date: "25/09/2025",
-    },
-  ];
+  useEffect(() => {
+    fetchStats();
+    fetchRecentOccurrences();
+  }, []);
+
+  const fetchStats = async () => {
+    const { data } = await supabase.from('occurrences').select('status');
+    
+    if (data) {
+      const total = data.length;
+      const pendentes = data.filter(o => o.status === 'Recebida' || o.status === 'Em análise').length;
+      const concluidas = data.filter(o => o.status === 'Concluída').length;
+      
+      setStats([
+        { label: "Total", value: total.toString(), sublabel: "ocorrências", icon: TrendingUp },
+        { label: "Minhas", value: "0", sublabel: "registradas por mim", icon: Users },
+        { label: "Pendentes", value: pendentes.toString(), sublabel: "em andamento", icon: Clock },
+        { label: "Concluídas", value: concluidas.toString(), sublabel: "resolvidas", icon: CheckCircle },
+      ]);
+    }
+  };
+
+  const fetchRecentOccurrences = async () => {
+    const { data } = await supabase
+      .from('occurrences')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (data) {
+      setRecentOccurrences(data);
+    }
+  };
 
   const quickActions = [
     { icon: Plus, label: "Nova Ocorrência", sublabel: "Registre um novo problema urbano", color: "bg-blue-500" },
@@ -183,30 +197,30 @@ const Index = () => {
               <Card key={occurrence.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground mb-1">{occurrence.type}</h4>
+                    <h4 className="font-semibold text-foreground mb-1">{occurrence.categoria}</h4>
                     <div className="flex flex-wrap gap-2">
                       <Badge className={getStatusColor(occurrence.status)}>
                         {occurrence.status}
                       </Badge>
-                      <Badge variant={getPriorityColor(occurrence.priority)}>
-                        {occurrence.priority}
+                      <Badge variant={getPriorityColor(occurrence.prioridade)}>
+                        {occurrence.prioridade}
                       </Badge>
                     </div>
                   </div>
                 </div>
                 
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {occurrence.description}
+                  {occurrence.descricao}
                 </p>
                 
                 <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3 h-3" />
-                    <span className="truncate">{occurrence.location}</span>
+                    <span className="truncate">{occurrence.endereco}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
-                    <span>{occurrence.date}</span>
+                    <span>{new Date(occurrence.created_at).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
               </Card>

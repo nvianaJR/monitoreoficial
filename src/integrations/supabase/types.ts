@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      occurrences: {
+        Row: {
+          categoria: string
+          created_at: string
+          descricao: string
+          endereco: string
+          fotos: string[] | null
+          id: string
+          nome: string
+          ponto_referencia: string | null
+          prioridade: string
+          status: string
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          descricao: string
+          endereco: string
+          fotos?: string[] | null
+          id?: string
+          nome: string
+          ponto_referencia?: string | null
+          prioridade?: string
+          status?: string
+          telefone: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          descricao?: string
+          endereco?: string
+          fotos?: string[] | null
+          id?: string
+          nome?: string
+          ponto_referencia?: string | null
+          prioridade?: string
+          status?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
