@@ -15,7 +15,7 @@ import { z } from "zod";
 const ocorrenciaSchema = z.object({
   nome: z.string().trim().min(3, "Nome deve ter no mínimo 3 caracteres").max(100, "Nome muito longo (máx. 100 caracteres)"),
   telefone: z.string().regex(/^\d{10,11}$/, "Telefone inválido. Use apenas números (10-11 dígitos)"),
-  categoria: z.enum(["iluminacao", "ruas-avenidas", "calcada", "poda-arvore", "carro-abandonado"], {
+  categoria: z.enum(["Calçada", "Escadaria", "Rampa", "Árvore", "Iluminação", "Outro"], {
     errorMap: () => ({ message: "Selecione uma categoria válida" })
   }),
   endereco: z.string().trim().min(10, "Endereço muito curto (mín. 10 caracteres)").max(200, "Endereço muito longo (máx. 200 caracteres)"),
@@ -38,6 +38,8 @@ const NovaOcorrencia = () => {
   const [foto2, setFoto2] = useState<File | null>(null);
   const [preview1, setPreview1] = useState<string>("");
   const [preview2, setPreview2] = useState<string>("");
+  const [acessibilidadeAfetada, setAcessibilidadeAfetada] = useState(false);
+  const [publica, setPublica] = useState(true);
 
   const handleFoto1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -144,7 +146,7 @@ const NovaOcorrencia = () => {
       // Get current user (if authenticated)
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Insert occurrence (PII temporarily included for transition period)
+      // Insert occurrence with new fields
       const { data: occurrenceData, error: occurrenceError } = await supabase
         .from('occurrences')
         .insert({
@@ -156,6 +158,8 @@ const NovaOcorrencia = () => {
           descricao,
           fotos: fotos.length > 0 ? fotos : null,
           user_id: user?.id || null,
+          acessibilidade_afetada: acessibilidadeAfetada,
+          publica: publica,
         })
         .select('id')
         .single();
@@ -248,11 +252,12 @@ const NovaOcorrencia = () => {
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="iluminacao">Iluminação</SelectItem>
-                      <SelectItem value="ruas-avenidas">Ruas & Avenidas</SelectItem>
-                      <SelectItem value="calcada">Calçada</SelectItem>
-                      <SelectItem value="poda-arvore">Poda de Árvore</SelectItem>
-                      <SelectItem value="carro-abandonado">Carro Abandonado</SelectItem>
+                      <SelectItem value="Calçada">Calçada</SelectItem>
+                      <SelectItem value="Escadaria">Escadaria</SelectItem>
+                      <SelectItem value="Rampa">Rampa</SelectItem>
+                      <SelectItem value="Árvore">Árvore</SelectItem>
+                      <SelectItem value="Iluminação">Iluminação</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -365,6 +370,40 @@ const NovaOcorrencia = () => {
                   rows={5}
                   required
                 />
+              </div>
+
+              {/* Additional Options */}
+              <div className="space-y-4 p-4 bg-accent rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="acessibilidade">Acessibilidade afetada?</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Marque se o problema afeta a mobilidade de pessoas com deficiência
+                    </p>
+                  </div>
+                  <input
+                    id="acessibilidade"
+                    type="checkbox"
+                    checked={acessibilidadeAfetada}
+                    onChange={(e) => setAcessibilidadeAfetada(e.target.checked)}
+                    className="w-5 h-5 rounded"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="publica">Tornar ocorrência pública?</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permitir que outros cidadãos vejam esta ocorrência
+                    </p>
+                  </div>
+                  <input
+                    id="publica"
+                    type="checkbox"
+                    checked={publica}
+                    onChange={(e) => setPublica(e.target.checked)}
+                    className="w-5 h-5 rounded"
+                  />
+                </div>
               </div>
 
               <Button type="submit" className="w-full" size="lg">

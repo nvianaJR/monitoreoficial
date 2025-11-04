@@ -15,14 +15,18 @@ import {
   Clock, 
   CheckCircle,
   MapPin,
-  Calendar
+  Calendar,
+  User as UserIcon,
+  LogOut
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [userName] = useState("Nivaldo Viana Junior");
+  const [user, setUser] = useState<any>(null);
+  const [userName, setUserName] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState([
     { label: "Total", value: "0", sublabel: "ocorrências", icon: TrendingUp },
     { label: "Minhas", value: "0", sublabel: "registradas por mim", icon: Users },
@@ -32,21 +36,51 @@ const Index = () => {
   const [recentOccurrences, setRecentOccurrences] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchStats();
-    fetchRecentOccurrences();
+    checkAuth();
   }, []);
 
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      setUser(session.user);
+      
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single();
+      
+      setUserName(profileData?.full_name || session.user.email?.split('@')[0] || "Usuário");
+
+      // Check if admin
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      setIsAdmin(!!roleData);
+    }
+
+    fetchStats();
+    fetchRecentOccurrences();
+  };
+
   const fetchStats = async () => {
-    const { data } = await supabase.from('occurrences').select('status');
+    const { data } = await supabase.from('occurrences').select('status, user_id');
     
     if (data) {
       const total = data.length;
-      const pendentes = data.filter(o => o.status === 'Recebida' || o.status === 'Em análise').length;
+      const pendentes = data.filter(o => o.status !== 'Concluída').length;
       const concluidas = data.filter(o => o.status === 'Concluída').length;
+      const minhas = user ? data.filter(o => o.user_id === user.id).length : 0;
       
       setStats([
         { label: "Total", value: total.toString(), sublabel: "ocorrências", icon: TrendingUp },
-        { label: "Minhas", value: "0", sublabel: "registradas por mim", icon: Users },
+        { label: "Minhas", value: minhas.toString(), sublabel: "registradas por mim", icon: Users },
         { label: "Pendentes", value: pendentes.toString(), sublabel: "em andamento", icon: Clock },
         { label: "Concluídas", value: concluidas.toString(), sublabel: "resolvidas", icon: CheckCircle },
       ]);
@@ -72,10 +106,11 @@ const Index = () => {
   ];
 
   const menuItems = [
-    { icon: Home, label: "Início" },
-    { icon: Plus, label: "Nova Ocorrência" },
-    { icon: List, label: "Minhas Ocorrências" },
-    { icon: Map, label: "Mapa" },
+    { icon: Home, label: "Início", path: "/" },
+    { icon: Plus, label: "Nova Ocorrência", path: "/nova-ocorrencia" },
+    { icon: List, label: "Minhas Ocorrências", path: "/minhas-ocorrencias" },
+    { icon: Map, label: "Mapa", path: "/mapa" },
+    { icon: UserIcon, label: "Perfil", path: "/perfil" },
   ];
 
   const getPriorityColor = (priority: string) => {
@@ -112,21 +147,50 @@ const Index = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
-              <div className="py-4 space-y-1">
-                {menuItems.map((item, index) => (
-                  <button
-                    key={index}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
-                    onClick={() => {
-                      if (index === 1) navigate("/nova-ocorrencia");
-                      if (index === 2) navigate("/minhas-ocorrencias");
-                      if (index === 3) navigate("/mapa");
-                    }}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
+              <div className="py-4 space-y-4">
+                <div className="px-4 pb-4 border-b">
+                  <p className="text-sm font-medium">{userName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user ? user.email : "Visitante"}
+                  </p>
+                  {isAdmin && (
+                    <Badge className="mt-2">Gestor</Badge>
+                  )}
+                </div>
+                
+                <div className="space-y-1">
+                  {menuItems.map((item, index) => (
+                    <button
+                      key={index}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
+                      onClick={() => navigate(item.path)}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                  
+                  {isAdmin && (
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left bg-primary/10"
+                      onClick={() => navigate("/painel-gestor")}
+                    >
+                      <TrendingUp className="w-5 h-5" />
+                      <span className="font-medium">Painel do Gestor</span>
+                    </button>
+                  )}
+                </div>
+
+                {!user && (
+                  <div className="px-4 pt-4 border-t">
+                    <Button 
+                      onClick={() => navigate("/auth")}
+                      className="w-full"
+                    >
+                      Entrar / Cadastrar
+                    </Button>
+                  </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>
@@ -137,8 +201,19 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6 pb-20 space-y-6">
         {/* Welcome Section */}
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Olá, {userName}! 👋</h2>
+          <h2 className="text-2xl font-bold">
+            Olá, {user ? userName : "Visitante"}! 👋
+          </h2>
           <p className="text-muted-foreground">Ajude a monitorar e melhorar nossa cidade.</p>
+          {!user && (
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/auth")}
+              className="mt-2"
+            >
+              Faça login para registrar ocorrências
+            </Button>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -194,7 +269,11 @@ const Index = () => {
 
           <div className="space-y-3">
             {recentOccurrences.map((occurrence) => (
-              <Card key={occurrence.id} className="p-4 space-y-3">
+              <Card 
+                key={occurrence.id} 
+                className="p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/ocorrencia/${occurrence.id}`)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-foreground mb-1">{occurrence.categoria}</h4>
@@ -205,6 +284,9 @@ const Index = () => {
                       <Badge variant={getPriorityColor(occurrence.prioridade)}>
                         {occurrence.prioridade}
                       </Badge>
+                      {occurrence.acessibilidade_afetada && (
+                        <Badge variant="destructive">♿</Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -241,15 +323,11 @@ const Index = () => {
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border md:hidden">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-around py-2">
-            {menuItems.map((item, index) => (
+            {menuItems.slice(0, 4).map((item, index) => (
               <button
                 key={index}
                 className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg hover:bg-accent transition-colors"
-                onClick={() => {
-                  if (index === 1) navigate("/nova-ocorrencia");
-                  if (index === 2) navigate("/minhas-ocorrencias");
-                  if (index === 3) navigate("/mapa");
-                }}
+                onClick={() => navigate(item.path)}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="text-xs font-medium">{item.label}</span>

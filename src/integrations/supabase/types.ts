@@ -40,45 +40,54 @@ export type Database = {
       }
       occurrences: {
         Row: {
+          acessibilidade_afetada: boolean | null
           categoria: string
           created_at: string
           descricao: string
           endereco: string
           fotos: string[] | null
+          historico: Json | null
           id: string
           nome: string
           ponto_referencia: string | null
           prioridade: string
+          publica: boolean | null
           status: string
           telefone: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          acessibilidade_afetada?: boolean | null
           categoria: string
           created_at?: string
           descricao: string
           endereco: string
           fotos?: string[] | null
+          historico?: Json | null
           id?: string
           nome: string
           ponto_referencia?: string | null
           prioridade?: string
+          publica?: boolean | null
           status?: string
           telefone: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          acessibilidade_afetada?: boolean | null
           categoria?: string
           created_at?: string
           descricao?: string
           endereco?: string
           fotos?: string[] | null
+          historico?: Json | null
           id?: string
           nome?: string
           ponto_referencia?: string | null
           prioridade?: string
+          publica?: boolean | null
           status?: string
           telefone?: string
           updated_at?: string
@@ -133,6 +142,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_occurrence_comment: {
+        Args: { _comentario: string; _occurrence_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
