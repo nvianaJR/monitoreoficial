@@ -9,6 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Validation schema with proper constraints
+const ocorrenciaSchema = z.object({
+  nome: z.string().trim().min(3, "Nome deve ter no mínimo 3 caracteres").max(100, "Nome muito longo (máx. 100 caracteres)"),
+  telefone: z.string().regex(/^\d{10,11}$/, "Telefone inválido. Use apenas números (10-11 dígitos)"),
+  categoria: z.enum(["iluminacao", "ruas-avenidas", "calcada", "poda-arvore", "carro-abandonado"], {
+    errorMap: () => ({ message: "Selecione uma categoria válida" })
+  }),
+  endereco: z.string().trim().min(10, "Endereço muito curto (mín. 10 caracteres)").max(200, "Endereço muito longo (máx. 200 caracteres)"),
+  ponto_referencia: z.string().max(200, "Ponto de referência muito longo (máx. 200 caracteres)").optional(),
+  descricao: z.string().trim().min(20, "Descrição muito curta (mín. 20 caracteres)").max(1000, "Descrição muito longa (máx. 1000 caracteres)")
+});
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const NovaOcorrencia = () => {
   const navigate = useNavigate();
@@ -26,6 +42,26 @@ const NovaOcorrencia = () => {
   const handleFoto1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A foto deve ter no máximo 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate file type
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({
+          title: "Formato inválido",
+          description: "Use apenas imagens JPG, PNG ou WEBP.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setFoto1(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -38,6 +74,26 @@ const NovaOcorrencia = () => {
   const handleFoto2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A foto deve ter no máximo 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate file type
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({
+          title: "Formato inválido",
+          description: "Use apenas imagens JPG, PNG ou WEBP.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setFoto2(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -60,10 +116,21 @@ const NovaOcorrencia = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nome || !telefone || !categoria || !endereco || !descricao) {
+    // Validate input with zod schema
+    const validationResult = ocorrenciaSchema.safeParse({
+      nome,
+      telefone,
+      categoria,
+      endereco,
+      ponto_referencia: pontoReferencia || undefined,
+      descricao
+    });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        title: "Erro de validação",
+        description: firstError.message,
         variant: "destructive",
       });
       return;
@@ -74,7 +141,11 @@ const NovaOcorrencia = () => {
       if (preview1) fotos.push(preview1);
       if (preview2) fotos.push(preview2);
 
-      const { error } = await supabase
+      // Get current user (if authenticated)
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Insert occurrence (PII temporarily included for transition period)
+      const { data: occurrenceData, error: occurrenceError } = await supabase
         .from('occurrences')
         .insert({
           nome,
@@ -84,9 +155,23 @@ const NovaOcorrencia = () => {
           ponto_referencia: pontoReferencia || null,
           descricao,
           fotos: fotos.length > 0 ? fotos : null,
+          user_id: user?.id || null,
+        })
+        .select('id')
+        .single();
+
+      if (occurrenceError) throw occurrenceError;
+
+      // Insert contact information into separate secure table
+      const { error: contactError } = await supabase
+        .from('occurrence_contacts')
+        .insert({
+          occurrence_id: occurrenceData.id,
+          nome,
+          telefone,
         });
 
-      if (error) throw error;
+      if (contactError) throw contactError;
 
       toast({
         title: "Ocorrência registrada!",
@@ -95,6 +180,7 @@ const NovaOcorrencia = () => {
       
       navigate("/");
     } catch (error) {
+      console.error("Error submitting occurrence:", error);
       toast({
         title: "Erro ao registrar",
         description: "Não foi possível registrar a ocorrência. Tente novamente.",
@@ -145,10 +231,14 @@ const NovaOcorrencia = () => {
                     id="telefone"
                     type="tel"
                     value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                    placeholder="(00) 00000-0000"
+                    onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="11987654321"
+                    maxLength={11}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Digite apenas números (10-11 dígitos)
+                  </p>
                 </div>
 
                 <div>
