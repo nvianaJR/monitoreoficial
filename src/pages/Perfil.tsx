@@ -161,9 +161,6 @@ const Perfil = () => {
         )}
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-          </CardHeader>
           <CardContent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
