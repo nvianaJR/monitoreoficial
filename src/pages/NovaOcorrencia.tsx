@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
 const NovaOcorrencia = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [endereco, setEndereco] = useState("");
   const [pontoReferencia, setPontoReferencia] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -57,7 +59,7 @@ const NovaOcorrencia = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nome || !telefone || !endereco || !descricao) {
+    if (!nome || !telefone || !categoria || !endereco || !descricao) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -121,6 +123,22 @@ const NovaOcorrencia = () => {
                     placeholder="(00) 00000-0000"
                     required
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="categoria">Categoria *</Label>
+                  <Select value={categoria} onValueChange={setCategoria} required>
+                    <SelectTrigger id="categoria">
+                      <SelectValue placeholder="Selecione uma categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iluminacao">Iluminação</SelectItem>
+                      <SelectItem value="ruas-avenidas">Ruas & Avenidas</SelectItem>
+                      <SelectItem value="calcada">Calçada</SelectItem>
+                      <SelectItem value="poda-arvore">Poda de Árvore</SelectItem>
+                      <SelectItem value="carro-abandonado">Carro Abandonado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
