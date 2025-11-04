@@ -1,12 +1,22 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 const Mapa = () => {
   const navigate = useNavigate();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState("");
+  const [isMapReady, setIsMapReady] = useState(false);
 
+  // Ocorrências com coordenadas reais de Cotia
   const ocorrencias = [
     {
       id: 1,
@@ -14,7 +24,7 @@ const Mapa = () => {
       status: "Em análise",
       description: "Buraco grande na calçada",
       location: "Rua das Flores, 123 - Centro",
-      coordinates: { x: 30, y: 40 }, // Posição no mapa visual (%)
+      coordinates: { lng: -46.9188, lat: -23.6039 }, // Centro de Cotia
     },
     {
       id: 2,
@@ -22,7 +32,7 @@ const Mapa = () => {
       status: "Concluída",
       description: "Poste de luz queimado",
       location: "Praça da Liberdade - Centro",
-      coordinates: { x: 60, y: 30 },
+      coordinates: { lng: -46.9210, lat: -23.6050 },
     },
     {
       id: 3,
@@ -30,9 +40,68 @@ const Mapa = () => {
       status: "Recebida",
       description: "Acúmulo de lixo",
       location: "Av. Principal, 456",
-      coordinates: { x: 45, y: 65 },
+      coordinates: { lng: -46.9170, lat: -23.6020 },
     },
   ];
+
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || isMapReady) return;
+
+    try {
+      mapboxgl.accessToken = mapboxToken;
+
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [-46.9188, -23.6039], // Centro de Cotia - SP
+        zoom: 13,
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      map.current.on("load", () => {
+        setIsMapReady(true);
+
+        // Adicionar marcadores para cada ocorrência
+        ocorrencias.forEach((occurrence) => {
+          const color = occurrence.status === "Concluída" ? "#22c55e" : "#ef4444";
+
+          // Criar elemento customizado do marcador
+          const el = document.createElement("div");
+          el.className = "custom-marker";
+          el.style.width = "30px";
+          el.style.height = "30px";
+          el.style.borderRadius = "50%";
+          el.style.backgroundColor = color;
+          el.style.border = "3px solid white";
+          el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+          el.style.cursor = "pointer";
+
+          // Criar popup com informações
+          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <div style="padding: 8px;">
+              <h3 style="font-weight: bold; margin-bottom: 8px;">${occurrence.type}</h3>
+              <p style="margin-bottom: 4px;"><strong>Status:</strong> ${occurrence.status}</p>
+              <p style="margin-bottom: 4px; font-size: 14px;">${occurrence.description}</p>
+              <p style="font-size: 12px; color: #666;">${occurrence.location}</p>
+            </div>
+          `);
+
+          // Adicionar marcador ao mapa
+          new mapboxgl.Marker(el)
+            .setLngLat([occurrence.coordinates.lng, occurrence.coordinates.lat])
+            .setPopup(popup)
+            .addTo(map.current!);
+        });
+      });
+    } catch (error) {
+      console.error("Erro ao inicializar o mapa:", error);
+    }
+
+    return () => {
+      map.current?.remove();
+    };
+  }, [mapboxToken]);
 
   const getMarkerColor = (status: string) => {
     switch (status) {
@@ -76,6 +145,49 @@ const Mapa = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 pb-24">
+        {!isMapReady && (
+          <Card className="mb-4">
+            <CardContent className="p-4 space-y-4">
+              <div>
+                <Label htmlFor="mapbox-token" className="text-sm font-medium">
+                  Token do Mapbox
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Para visualizar o mapa real de Cotia, insira seu token público do Mapbox.{" "}
+                  <a 
+                    href="https://account.mapbox.com/access-tokens/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    Obter token
+                  </a>
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="mapbox-token"
+                    type="text"
+                    placeholder="pk.eyJ1..."
+                    value={mapboxToken}
+                    onChange={(e) => setMapboxToken(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => {
+                      if (mapboxToken) {
+                        window.location.reload();
+                      }
+                    }}
+                    disabled={!mapboxToken}
+                  >
+                    Carregar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="mb-4">
           <CardContent className="p-4">
             <div className="flex items-center gap-4 text-sm">
@@ -91,62 +203,10 @@ const Mapa = () => {
           </CardContent>
         </Card>
 
-        {/* Mapa Visual */}
+        {/* Mapa Real do Mapbox */}
         <Card className="overflow-hidden mb-6">
           <CardContent className="p-0">
-            <div className="relative w-full h-[400px] bg-muted">
-              {/* Grid do mapa para parecer mais real */}
-              <div className="absolute inset-0 opacity-20">
-                <svg width="100%" height="100%">
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-                  </pattern>
-                  <rect width="100%" height="100%" fill="url(#grid)" />
-                </svg>
-              </div>
-
-              {/* Marcadores das ocorrências */}
-              {ocorrencias.map((occurrence) => (
-                <div
-                  key={occurrence.id}
-                  className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer group"
-                  style={{
-                    left: `${occurrence.coordinates.x}%`,
-                    top: `${occurrence.coordinates.y}%`,
-                  }}
-                >
-                  {/* Pin do marcador */}
-                  <div className="relative flex flex-col items-center">
-                    <div
-                      className={`w-8 h-8 rounded-full ${getMarkerColor(
-                        occurrence.status
-                      )} shadow-lg flex items-center justify-center animate-pulse`}
-                    >
-                      <MapPin className="w-5 h-5 text-white" fill="currentColor" />
-                    </div>
-                    <div className="w-0.5 h-4 bg-current opacity-50"></div>
-                    
-                    {/* Tooltip ao passar o mouse */}
-                    <div className="absolute top-full mt-2 hidden group-hover:block z-10 w-48">
-                      <Card className="shadow-xl">
-                        <CardContent className="p-3 space-y-2">
-                          <div className="font-semibold">{occurrence.type}</div>
-                          <Badge className={getStatusColor(occurrence.status)} variant="outline">
-                            {occurrence.status}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">
-                            {occurrence.description}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {occurrence.location}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div ref={mapContainer} className="w-full h-[400px] bg-muted" />
           </CardContent>
         </Card>
 
