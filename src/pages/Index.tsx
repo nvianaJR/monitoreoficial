@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import {
 import logo from "@/assets/logo.png";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [userName] = useState("Nivaldo Viana Junior");
 
   const stats = [
@@ -101,6 +103,7 @@ const Index = () => {
                   <button
                     key={index}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
+                    onClick={() => index === 1 && navigate("/nova-ocorrencia")}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
@@ -123,7 +126,11 @@ const Index = () => {
         {/* Quick Actions */}
         <div className="grid gap-3">
           {quickActions.map((action, index) => (
-            <Card key={index} className="p-4 cursor-pointer hover:shadow-md transition-shadow">
+            <Card 
+              key={index} 
+              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => index === 0 && navigate("/nova-ocorrencia")}
+            >
               <div className="flex items-center gap-4">
                 <div className={`${action.color} w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}>
                   <action.icon className="w-6 h-6 text-white" />
@@ -212,6 +219,7 @@ const Index = () => {
               <button
                 key={index}
                 className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg hover:bg-accent transition-colors"
+                onClick={() => index === 1 && navigate("/nova-ocorrencia")}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="text-xs font-medium">{item.label}</span>
