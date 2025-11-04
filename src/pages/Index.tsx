@@ -103,7 +103,10 @@ const Index = () => {
                   <button
                     key={index}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
-                    onClick={() => index === 1 && navigate("/nova-ocorrencia")}
+                    onClick={() => {
+                      if (index === 1) navigate("/nova-ocorrencia");
+                      if (index === 2) navigate("/minhas-ocorrencias");
+                    }}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
@@ -129,7 +132,10 @@ const Index = () => {
             <Card 
               key={index} 
               className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => index === 0 && navigate("/nova-ocorrencia")}
+              onClick={() => {
+                if (index === 0) navigate("/nova-ocorrencia");
+                if (index === 1) navigate("/minhas-ocorrencias");
+              }}
             >
               <div className="flex items-center gap-4">
                 <div className={`${action.color} w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -219,7 +225,10 @@ const Index = () => {
               <button
                 key={index}
                 className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg hover:bg-accent transition-colors"
-                onClick={() => index === 1 && navigate("/nova-ocorrencia")}
+                onClick={() => {
+                  if (index === 1) navigate("/nova-ocorrencia");
+                  if (index === 2) navigate("/minhas-ocorrencias");
+                }}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="text-xs font-medium">{item.label}</span>
