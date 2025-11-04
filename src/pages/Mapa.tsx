@@ -1,22 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import mapaCotia from "@/assets/mapa-cotia.jpg";
 
 const Mapa = () => {
   const navigate = useNavigate();
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState("");
-  const [isMapReady, setIsMapReady] = useState(false);
 
-  // Ocorrências com coordenadas reais de Cotia
+  // Ocorrências com posições relativas na imagem (%)
   const ocorrencias = [
     {
       id: 1,
@@ -24,7 +18,7 @@ const Mapa = () => {
       status: "Em análise",
       description: "Buraco grande na calçada",
       location: "Rua das Flores, 123 - Centro",
-      coordinates: { lng: -46.9188, lat: -23.6039 }, // Centro de Cotia
+      coordinates: { x: 45, y: 35 },
     },
     {
       id: 2,
@@ -32,7 +26,7 @@ const Mapa = () => {
       status: "Concluída",
       description: "Poste de luz queimado",
       location: "Praça da Liberdade - Centro",
-      coordinates: { lng: -46.9210, lat: -23.6050 },
+      coordinates: { x: 60, y: 50 },
     },
     {
       id: 3,
@@ -40,68 +34,9 @@ const Mapa = () => {
       status: "Recebida",
       description: "Acúmulo de lixo",
       location: "Av. Principal, 456",
-      coordinates: { lng: -46.9170, lat: -23.6020 },
+      coordinates: { x: 30, y: 60 },
     },
   ];
-
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || isMapReady) return;
-
-    try {
-      mapboxgl.accessToken = mapboxToken;
-
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [-46.9188, -23.6039], // Centro de Cotia - SP
-        zoom: 13,
-      });
-
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      map.current.on("load", () => {
-        setIsMapReady(true);
-
-        // Adicionar marcadores para cada ocorrência
-        ocorrencias.forEach((occurrence) => {
-          const color = occurrence.status === "Concluída" ? "#22c55e" : "#ef4444";
-
-          // Criar elemento customizado do marcador
-          const el = document.createElement("div");
-          el.className = "custom-marker";
-          el.style.width = "30px";
-          el.style.height = "30px";
-          el.style.borderRadius = "50%";
-          el.style.backgroundColor = color;
-          el.style.border = "3px solid white";
-          el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
-          el.style.cursor = "pointer";
-
-          // Criar popup com informações
-          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div style="padding: 8px;">
-              <h3 style="font-weight: bold; margin-bottom: 8px;">${occurrence.type}</h3>
-              <p style="margin-bottom: 4px;"><strong>Status:</strong> ${occurrence.status}</p>
-              <p style="margin-bottom: 4px; font-size: 14px;">${occurrence.description}</p>
-              <p style="font-size: 12px; color: #666;">${occurrence.location}</p>
-            </div>
-          `);
-
-          // Adicionar marcador ao mapa
-          new mapboxgl.Marker(el)
-            .setLngLat([occurrence.coordinates.lng, occurrence.coordinates.lat])
-            .setPopup(popup)
-            .addTo(map.current!);
-        });
-      });
-    } catch (error) {
-      console.error("Erro ao inicializar o mapa:", error);
-    }
-
-    return () => {
-      map.current?.remove();
-    };
-  }, [mapboxToken]);
 
   const getMarkerColor = (status: string) => {
     switch (status) {
@@ -145,68 +80,126 @@ const Mapa = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 pb-24">
-        {!isMapReady && (
-          <Card className="mb-4">
-            <CardContent className="p-4 space-y-4">
-              <div>
-                <Label htmlFor="mapbox-token" className="text-sm font-medium">
-                  Token do Mapbox
-                </Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Para visualizar o mapa real de Cotia, insira seu token público do Mapbox.{" "}
-                  <a 
-                    href="https://account.mapbox.com/access-tokens/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary underline"
-                  >
-                    Obter token
-                  </a>
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    id="mapbox-token"
-                    type="text"
-                    placeholder="pk.eyJ1..."
-                    value={mapboxToken}
-                    onChange={(e) => setMapboxToken(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={() => {
-                      if (mapboxToken) {
-                        window.location.reload();
-                      }
-                    }}
-                    disabled={!mapboxToken}
-                  >
-                    Carregar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card className="mb-4">
           <CardContent className="p-4">
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                <span>Pendente</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                  <span>Pendente</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                  <span>Concluída</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-green-500"></div>
-                <span>Concluída</span>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Use os dedos ou mouse para navegar e dar zoom
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Mapa Real do Mapbox */}
+        {/* Mapa com Zoom */}
         <Card className="overflow-hidden mb-6">
           <CardContent className="p-0">
-            <div ref={mapContainer} className="w-full h-[400px] bg-muted" />
+            <TransformWrapper
+              initialScale={1}
+              minScale={0.5}
+              maxScale={4}
+              centerOnInit
+            >
+              {({ zoomIn, zoomOut, resetTransform }) => (
+                <>
+                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => zoomIn()}
+                      className="shadow-lg"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => zoomOut()}
+                      className="shadow-lg"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => resetTransform()}
+                      className="shadow-lg text-xs"
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                  <TransformComponent
+                    wrapperStyle={{
+                      width: "100%",
+                      height: "500px",
+                      cursor: "grab",
+                    }}
+                    contentStyle={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <div className="relative w-full h-full">
+                      <img
+                        src={mapaCotia}
+                        alt="Mapa de Cotia"
+                        className="w-full h-full object-contain"
+                        draggable={false}
+                      />
+                      
+                      {/* Marcadores das ocorrências */}
+                      {ocorrencias.map((occurrence) => (
+                        <div
+                          key={occurrence.id}
+                          className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer group"
+                          style={{
+                            left: `${occurrence.coordinates.x}%`,
+                            top: `${occurrence.coordinates.y}%`,
+                          }}
+                        >
+                          <div className="relative flex flex-col items-center">
+                            <div
+                              className={`w-8 h-8 rounded-full ${getMarkerColor(
+                                occurrence.status
+                              )} shadow-lg flex items-center justify-center border-2 border-white animate-pulse`}
+                            >
+                              <MapPin className="w-5 h-5 text-white" fill="currentColor" />
+                            </div>
+                            
+                            {/* Tooltip */}
+                            <div className="absolute top-full mt-2 hidden group-hover:block z-50 w-56">
+                              <Card className="shadow-xl">
+                                <CardContent className="p-3 space-y-2">
+                                  <div className="font-semibold">{occurrence.type}</div>
+                                  <Badge className={getStatusColor(occurrence.status)}>
+                                    {occurrence.status}
+                                  </Badge>
+                                  <p className="text-xs text-muted-foreground">
+                                    {occurrence.description}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {occurrence.location}
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TransformComponent>
+                </>
+              )}
+            </TransformWrapper>
           </CardContent>
         </Card>
 
