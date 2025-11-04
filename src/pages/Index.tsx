@@ -16,6 +16,7 @@ import {
   MapPin,
   Calendar
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const [userName] = useState("Nivaldo Viana Junior");
@@ -85,13 +86,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-primary text-primary-foreground shadow-md">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Monitore</h1>
-              <p className="text-xs opacity-90">Monitoramento Urbano</p>
-            </div>
+            <img src={logo} alt="Monitore Logo" className="h-10 w-auto" />
           </div>
           
           <Sheet>
