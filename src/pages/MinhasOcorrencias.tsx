@@ -7,28 +7,7 @@ import { Badge } from "@/components/ui/badge";
 const MinhasOcorrencias = () => {
   const navigate = useNavigate();
 
-  const minhasOcorrencias = [
-    {
-      id: 1,
-      type: "Calçada",
-      status: "Em análise",
-      priority: "Alta",
-      description: "Buraco grande na calçada em frente ao mercado, dificultando passagem de pedestres e cadeirantes.",
-      location: "Rua das Flores, 123 - Centro",
-      date: "20/10/2025",
-      registeredBy: "Nivaldo Viana Junior",
-    },
-    {
-      id: 2,
-      type: "Iluminação",
-      status: "Concluída",
-      priority: "Média",
-      description: "Poste de luz queimado na praça principal.",
-      location: "Praça da Liberdade - Centro",
-      date: "15/10/2025",
-      registeredBy: "Nivaldo Viana Junior",
-    },
-  ];
+  const minhasOcorrencias: any[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

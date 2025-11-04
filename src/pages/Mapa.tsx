@@ -7,33 +7,7 @@ import { Badge } from "@/components/ui/badge";
 const Mapa = () => {
   const navigate = useNavigate();
 
-  // Ocorrências com posições relativas na imagem (%)
-  const ocorrencias = [
-    {
-      id: 1,
-      type: "Calçada",
-      status: "Em análise",
-      description: "Buraco grande na calçada",
-      location: "Rua das Flores, 123 - Centro",
-      coordinates: { x: 45, y: 35 },
-    },
-    {
-      id: 2,
-      type: "Iluminação",
-      status: "Concluída",
-      description: "Poste de luz queimado",
-      location: "Praça da Liberdade - Centro",
-      coordinates: { x: 60, y: 50 },
-    },
-    {
-      id: 3,
-      type: "Lixo",
-      status: "Recebida",
-      description: "Acúmulo de lixo",
-      location: "Av. Principal, 456",
-      coordinates: { x: 30, y: 60 },
-    },
-  ];
+  const ocorrencias: any[] = [];
 
   const getMarkerColor = (status: string) => {
     switch (status) {
