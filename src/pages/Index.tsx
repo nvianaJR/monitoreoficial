@@ -106,6 +106,7 @@ const Index = () => {
                     onClick={() => {
                       if (index === 1) navigate("/nova-ocorrencia");
                       if (index === 2) navigate("/minhas-ocorrencias");
+                      if (index === 3) navigate("/mapa");
                     }}
                   >
                     <item.icon className="w-5 h-5" />
@@ -135,6 +136,7 @@ const Index = () => {
               onClick={() => {
                 if (index === 0) navigate("/nova-ocorrencia");
                 if (index === 1) navigate("/minhas-ocorrencias");
+                if (index === 2) navigate("/mapa");
               }}
             >
               <div className="flex items-center gap-4">
@@ -228,6 +230,7 @@ const Index = () => {
                 onClick={() => {
                   if (index === 1) navigate("/nova-ocorrencia");
                   if (index === 2) navigate("/minhas-ocorrencias");
+                  if (index === 3) navigate("/mapa");
                 }}
               >
                 <item.icon className="w-5 h-5" />

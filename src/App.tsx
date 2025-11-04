@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NovaOcorrencia from "./pages/NovaOcorrencia";
 import MinhasOcorrencias from "./pages/MinhasOcorrencias";
+import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/install" element={<Install />} />
           <Route path="/nova-ocorrencia" element={<NovaOcorrencia />} />
           <Route path="/minhas-ocorrencias" element={<MinhasOcorrencias />} />
+          <Route path="/mapa" element={<Mapa />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
