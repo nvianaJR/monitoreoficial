@@ -146,15 +146,23 @@ const Perfil = () => {
             <CardHeader>
               <CardTitle>Painel de Gestor</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground mb-4">
-                Você tem acesso ao painel administrativo para gerenciar ocorrências.
+                Você tem acesso aos painéis administrativos para gerenciar ocorrências.
               </p>
               <Button 
                 onClick={() => navigate("/painel-gestor")}
                 className="w-full"
+                variant="default"
               >
-                Acessar Painel do Gestor
+                Painel do Gestor
+              </Button>
+              <Button 
+                onClick={() => navigate("/admin-tickets")}
+                className="w-full"
+                variant="outline"
+              >
+                Gerenciar Chamados
               </Button>
             </CardContent>
           </Card>
