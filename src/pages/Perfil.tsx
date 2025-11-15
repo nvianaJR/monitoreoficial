@@ -50,13 +50,14 @@ const Perfil = () => {
       setProfile(profileData);
 
       // Check if user is admin
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', authUser.id)
         .eq('role', 'admin')
         .single();
 
+      console.log('Admin check:', { userId: authUser.id, roleData, roleError, isAdmin: !!roleData });
       setIsAdmin(!!roleData);
     } catch (error) {
       console.error("Error fetching user data:", error);
