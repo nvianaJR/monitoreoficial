@@ -13,6 +13,7 @@ import MinhasOcorrencias from "./pages/MinhasOcorrencias";
 import TodasOcorrencias from "./pages/TodasOcorrencias";
 import DetalheOcorrencia from "./pages/DetalheOcorrencia";
 import PainelGestor from "./pages/PainelGestor";
+import AdminTicketsPage from "./pages/AdminTicketsPage";
 import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/todas-ocorrencias" element={<TodasOcorrencias />} />
           <Route path="/ocorrencia/:id" element={<DetalheOcorrencia />} />
           <Route path="/painel-gestor" element={<PainelGestor />} />
+          <Route path="/admin-tickets" element={<AdminTicketsPage />} />
           <Route path="/mapa" element={<Mapa />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

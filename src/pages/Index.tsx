@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminSetup } from "@/hooks/useAdminSetup";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ const Index = () => {
     { label: "Concluídas", value: "0", sublabel: "resolvidas", icon: CheckCircle },
   ]);
   const [recentOccurrences, setRecentOccurrences] = useState<any[]>([]);
+
+  // Setup admin user automatically
+  useAdminSetup();
 
   useEffect(() => {
     checkAuth();
