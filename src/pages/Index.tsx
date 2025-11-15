@@ -59,13 +59,14 @@ const Index = () => {
       setUserName(profileData?.full_name || session.user.email?.split('@')[0] || "Usuário");
 
       // Check if admin
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', session.user.id)
         .eq('role', 'admin')
         .single();
 
+      console.log('Admin check (Index):', { userId: session.user.id, roleData, roleError, isAdmin: !!roleData });
       setIsAdmin(!!roleData);
     }
 
