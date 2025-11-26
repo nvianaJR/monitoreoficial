@@ -4,26 +4,30 @@ import { ArrowLeft, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { getOccurrences } from "@/services/occurrencesService";
+import type { Occurrence } from "@/types/occurrence";
+import { toast } from "sonner";
 
 const TodasOcorrencias = () => {
   const navigate = useNavigate();
-  const [todasOcorrencias, setTodasOcorrencias] = useState<any[]>([]);
+  const [todasOcorrencias, setTodasOcorrencias] = useState<Occurrence[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOccurrences();
   }, []);
 
   const fetchOccurrences = async () => {
-    const { data } = await supabase
-      .from('occurrences')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10);
+    setLoading(true);
+    const { data, error } = await getOccurrences(10);
     
-    if (data) {
+    if (error) {
+      toast.error("Erro ao carregar ocorrências");
+      console.error(error);
+    } else {
       setTodasOcorrencias(data);
     }
+    setLoading(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -75,55 +79,63 @@ const TodasOcorrencias = () => {
           </p>
         </div>
 
-        <div className="space-y-4">
-          {todasOcorrencias.map((occurrence) => (
-            <Card key={occurrence.id} className="overflow-hidden">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold text-lg">{occurrence.categoria}</h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge className={getStatusColor(occurrence.status)}>
-                        {occurrence.status}
-                      </Badge>
-                      <Badge variant={getPriorityColor(occurrence.prioridade)}>
-                        Prioridade: {occurrence.prioridade}
-                      </Badge>
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {todasOcorrencias.map((occurrence) => (
+                <Card key={occurrence.id} className="overflow-hidden">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold text-lg">{occurrence.categoria}</h3>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge className={getStatusColor(occurrence.status)}>
+                            {occurrence.status}
+                          </Badge>
+                          <Badge variant={getPriorityColor(occurrence.prioridade) as any}>
+                            Prioridade: {occurrence.prioridade}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <p className="text-sm text-muted-foreground">
-                  {occurrence.descricao}
+                    <p className="text-sm text-muted-foreground">
+                      {occurrence.descricao}
+                    </p>
+
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{occurrence.endereco}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Registrada em {new Date(occurrence.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {todasOcorrencias.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">
+                  Nenhuma ocorrência registrada no sistema ainda.
                 </p>
-
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{occurrence.endereco}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>Registrada em {new Date(occurrence.created_at).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {todasOcorrencias.length === 0 && (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">
-              Nenhuma ocorrência registrada no sistema ainda.
-            </p>
-            <Button
-              onClick={() => navigate("/nova-ocorrencia")}
-              className="mt-4"
-            >
-              Registrar primeira ocorrência
-            </Button>
-          </Card>
+                <Button
+                  onClick={() => navigate("/nova-ocorrencia")}
+                  className="mt-4"
+                >
+                  Registrar primeira ocorrência
+                </Button>
+              </Card>
+            )}
+          </>
         )}
       </main>
     </div>
